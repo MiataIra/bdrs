@@ -20,7 +20,7 @@ shinyUI(fluidPage(
                         selected = 1),
 
             ## RapportValg
-            selectInput("Rapvalg", "Rapport valg:",
+            selectInput("RapValg", "Rapport valg:",
                         choices = list("Landet" = 1, "Lokal" = 2, "Landet vs. øvrige" = 3),
                         selected = 1),
 
@@ -63,5 +63,6 @@ shinyUI(fluidPage(
 
 
         mainPanel(
-        verbatimTextOutput("dato1"))
+            textOutput("implot"))
+
     )))
