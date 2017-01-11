@@ -1,5 +1,7 @@
 clean <- function(data = NULL) {
 
+    library(dplyr)
+
     ## Rename datasettet
     RegData <- data
 
@@ -63,11 +65,35 @@ clean <- function(data = NULL) {
 
 
     ## SykehusNavn , SykehusKode
-    RegData$SykehusKode <- NA
-    RegData$SykehusKode[RegData$SykehusNavn=="Ullevål universitetssykehus"] <- 1
-    RegData$SykehusKode[RegData$SykehusNavn=="Haugesund sjukehus"] <- 18
-    RegData$SykehusKode[RegData$SykehusNavn=="Sykehuset i Vestfold, Tønsberg"] <- 15
-    RegData$SykehusKode <- factor(RegData$SykehusKode)
+
+    ## dplyr::mutate(.data = RegData,
+    ##               SykehusKode <- replace(SykehusKode, Sykehus == "Ullevål universitetssykehus", 1))
+
+    ## RegData$SykehusKode <- NA
+    ## RegData$SykehusKode[RegData$Sykehus=="Ullevål universitetssykehus"] <- 1
+    ## RegData$SykehusKode[RegData$Sykehus=="Haugesund sjukehus"] <- 18
+    ## RegData$SykehusKode[RegData$Sykehus=="Sykehuset i Vestfold, Tønsberg"] <- 15
+    ## RegData$SykehusKode[RegData]
+    ## RegData$SykehusKode <- factor(RegData$SykehusKode)
+
+    mutate_when <- function(data, ...) {
+        dots <- eval(substitute(alist(...)))
+        for (i in seq(1, length(dots), by = 2)) {
+            condition <- eval(dots[[i]], envir = data)
+            mutations <- eval(dots[[i + 1]], envir = data[condition, , drop = FALSE])
+            data[condition, names(mutations)] <- mutations
+        }
+        data
+    }
+
+    RegData <- RegData %>%
+        mutate_when(Sykehus == "Ullevål universitetssykehus", list(SykehusKode = 1),
+                    Sykehus == "Haugesund sjukehus", list(SykehusKode = 18),
+                    Sykehus == "Sykehuset i Vestfold, Tønsberg", list(SykehusKode = 15),
+                    Sykehus == "St. Olavs Hospital", list(SykehusKode = 3),
+                    Sykehus == "Sykehuset Levanger", list(SykehusKode = 4)
+                    )
+
 
     return(invisible(RegData))
 }

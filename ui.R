@@ -11,8 +11,10 @@ fluidPage(
             ## Sykehus
             selectInput("sykehus", "Valg sykehus:",
                         choices = list("Ullevål sykehus" = 1,
-                                       "Sykehus 2" = 15,
-                                       "Sykehus 3" = 18),
+                                       "Sykehuset i Vestfold" = 15,
+                                       "Haugesund sjukehus" = 18,
+                                       "St. Olavs Hospital" = 3,
+                                       "Sykehuset Levanger" = 4),
                         selected = 1),
             ## DataValg
             selectInput("DataValg", "Valg data:",
@@ -65,6 +67,7 @@ fluidPage(
 
 
         mainPanel(
-            textOutput("test"))
+            plotOutput("plot"),
+            dataTableOutput("test"))
 
     ))

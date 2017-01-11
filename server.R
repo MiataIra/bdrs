@@ -1,5 +1,6 @@
 
 library(shiny)
+library(ggplot2)
 library(dplyr)
 library(lazyeval)
 
@@ -12,18 +13,16 @@ function(input, output, session) {
         ## Filter
         ##------------------
 
-        '%i%' <- intersect
+        ## '%i%' <- intersect
 
-        indAld <- which(data$Alder >= min(input$alder) & data$Alder <= max(input$alder))
+        ## indAld <- which(data$Alder >= min(input$alder) & data$Alder <= max(input$alder))
 
-        indKjonn <- if (input$kjonn != 3) {which(data$kjonn == input$kjonn)
-                    } else {
-                        indKjonn <- 1:2
-                    }
+        ## indKjonn <- if (input$kjonn != 3) {which(data$kjonn == input$kjonn)
+        ##             } else {
+        ##                 indKjonn <- 1:2
+        ##             }
 
-        indDato <- which(data$innYear >= format(input$dato[1]) & data$innYear <= format(input$dato[2]))
-
-
+        ## indDato <- which(data$innYear >= format(input$dato[1]) & data$innYear <= format(input$dato[2]))
 
 
         ## Alder
@@ -48,28 +47,46 @@ function(input, output, session) {
         dataValg <- input$DataValg
         regVec <- if (dataValg != 4) {dataValg} else {regVec <- 1:3}
 
-        fileSelect <- lazyeval::interp(~var1 %in% alderVec &
-                                           var2 %in% kjonnVec &
-                                           var3 %in% datoVec &
-                                           var4 %in% regVec &
-                                           var5 %in% diaVec,
-                                       .values = list(var1 = as.name("Alder"),
-                                                      var2 = as.name("kjonn"),
-                                                      var3 = as.name("innYear"),
-                                                      var4 = as.name("regValg"),
-                                                      var5 = as.name("diaType1")))
+        fdata <- dplyr::filter(data,
+                               Alder %in% alderVec,
+                               kjonn %in% kjonnVec,
+                               innYear %in% datoVec,
+                               regValg %in% regVec,
+                               diaType1 %in% diaVec)
 
-        ## Filtret data
-        data <- dplyr::filter_(.data = data, .dots = fileSelect)
-        data
+        fdata
+
+        ## fileSelect <- lazyeval::interp(~var1 %in% alderVec &
+        ##                                    var2 %in% kjonnVec &
+        ##                                    var3 %in% datoVec &
+        ##                                    var4 %in% regVec &
+        ##                                    var5 %in% diaVec,
+        ##                                .values = list(var1 = as.name("Alder"),
+        ##                                               var2 = as.name("kjonn"),
+        ##                                               var3 = as.name("innYear"),
+        ##                                               var4 = as.name("regValg"),
+        ##                                               var5 = as.name("diaType1")))
+
+        ## ## Filtret data
+        ## data <- dplyr::filter_(.data = data, .dots = fileSelect)
+        ## data
 
     })
 
-    output$test <- renderText({
+    output$test <- renderDataTable({
         filter.data()
     })
 
 
+    output$plot <- renderPlot({
+
+        data <- filter.data()
+        dtall <- data %>% group_by(AlderKat) %>%
+            tally
+
+        ggplot(dtall, aes(AlderKat, n)) + geom_bar(stat = "identity")
+
+    })
 
     session$onSessionEnded(stopApp)
 }
