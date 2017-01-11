@@ -1,3 +1,12 @@
 ## For objekter som skal være tilgjengelig i både ui.R og server.R
 
-data <- foreign::read.spss("./data/annonym20161107.sav", to.data.frame = TRUE, reencode = "UTF-8")
+raw.data <- read.csv("./data/annonym2017jan.csv",
+                 header = TRUE,
+                 sep = ";",
+                 fileEncoding = "latin1",
+                 stringsAsFactor = FALSE,
+                 strip.white = TRUE)
+
+source("./codes/clean-file.R")
+
+data <- clean(data = raw.data)

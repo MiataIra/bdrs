@@ -1,7 +1,7 @@
 
 library(shiny)
 
-shinyUI(fluidPage(
+fluidPage(
 
     titlePanel("Monitorering for BDR"),
 
@@ -26,7 +26,7 @@ shinyUI(fluidPage(
 
             ## Dato
             dateRangeInput("dato", "Valg dato fra og til:",
-                           start = Sys.Date() - 360, end = Sys.Date()),
+                           start = Sys.Date() - 360, end = Sys.Date(), separator = "til", language = "no"),
 
             ## DB Type
             radioButtons("dbtype", "Diabetes type:",
@@ -40,8 +40,10 @@ shinyUI(fluidPage(
 
 
             ## Alder
-            numericInput("minAlder", "Minimum Alder:", value = 0),
-            numericInput("maxAlder", "Maximum Alder:", value = 25),
+            sliderInput("alder", "Min og Maks Alder",
+                        min = 0, max = 30, step = 1, value = c(0, 20)),
+            ## numericInput("minAlder", "Minimum Alder:", value = 0, min = 0),
+            ## numericInput("maxAlder", "Maximum Alder:", value = 25, min = 1),
 
             ## Variabel
             selectInput("valgtVar", "Valg variabel for x-aksen:",
@@ -58,11 +60,11 @@ shinyUI(fluidPage(
                                        "DB varighet" = 4)),
 
             ## Button
-            submitButton("Kjør")
+            submitButton("Oppdatere")
         ),
 
 
         mainPanel(
-            textOutput("implot"))
+            textOutput("test"))
 
-    )))
+    ))
