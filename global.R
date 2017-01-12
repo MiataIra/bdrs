@@ -1,5 +1,7 @@
 ## For objekter som skal være tilgjengelig i både ui.R og server.R
 
+rm(list=ls())
+
 raw.data <- read.csv("./data/annonym2017jan.csv",
                  header = TRUE,
                  sep = ";",
