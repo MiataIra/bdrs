@@ -32,28 +32,94 @@ function(input, output, session) {
         dataValg <- input$DataValg
         regVec <- if (dataValg != 4) {dataValg} else {regVec <- 1:3}
 
-        dplyr::filter(data,
-                      Alder %in% alderVec,
-                      kjonn %in% kjonnVec,
-                      innYear %in% datoVec,
-                      regValg %in% regVec,
-                      diaType1 %in% diaVec)
+        RegData <- dplyr::filter(data,
+                                 Alder %in% alderVec,
+                                 kjonn %in% kjonnVec,
+                                 innYear %in% datoVec,
+                                 regValg %in% regVec,
+                                 diaType1 %in% diaVec)
 
+
+        ##-----------------------------
+        ## Sammenligne sykehus funksjon
+        ##-----------------------------
+
+        sykSamlikFn <- function(x) {
+            sykSamlik = c("SykehusKode",
+                          "Sykehus",
+                          "hba",
+                          "diaVarighet",
+                          "Variabel")
+            RegData$Variabel <- RegData[,x]
+            RegDataValg <- RegData %>%
+                select_(.dots = sykSamlik)
+            return(RegDataValg)
+        }
+
+
+
+        ## === Kategoriske Variabler (xScale==2) === ##
+
+        ## Alderskategori
+        if (input$valgtVar == 2) {
+            xScale = 2
+            valgtVar = "AlderKat"
+            RegDataValg <- sykSamlikFn(valgtVar)
+            figT <- "Figur: Fordeling av alder"
+            xLab = "Alderskategorier (år)"
+            xBreaks = levels(RegDataValg$Variabel)
+        }
+
+        ## Kjønn
+        if (input$valgtVar == 3) {
+            xScale = 2
+            valgtVar = "kjonn1"
+            RegDataValg <- sykSamlikFn(valgtVar)
+            ## levels = 1:2
+            ## labels = c("Gutt", "Jente")
+            ## RegDataValg$Variabel <- factor(RegDataValg$Variabel, levels = levels, labels = labels)
+            figT <- "Figur: Fordeling av kjønn"
+            xLab = "Kjønn"
+            xBreaks = levels(RegDataValg$Variabel)
+        }
+
+
+
+        ## --- Lokal vs Landet
+
+        if (input$RapValg != 1) {
+            data <- mutate(RegDataValg, group = ifelse(input$sykehus == SykehusKode, 1, 2))
+        } else {
+            data <- RegDataValg
+        }
+
+        data
 
     })
 
     output$test <- renderDataTable({
-        filter.data()
+
+
+        if (input$RapValg !=1) {
+
+            tab.data <- dplyr::filter(filter.data(), group == 1)
+        } else {
+
+            tab.data <- filter.data()
+        }
+
+        tab.data
     })
 
 
     output$plot <- renderPlot({
 
         data <- filter.data()
-        dtall <- data %>% group_by(AlderKat) %>%
+
+        dtall <- data %>% group_by(Variabel) %>%
             tally
 
-        ggplot(dtall, aes(AlderKat, n)) + geom_bar(stat = "identity")
+        ggplot(dtall, aes(Variabel, n)) + geom_bar(stat = "identity")
 
     })
 

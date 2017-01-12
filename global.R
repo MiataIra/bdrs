@@ -12,3 +12,4 @@ raw.data <- read.csv("./data/annonym2017jan.csv",
 source("./codes/clean-file.R")
 
 data <- clean(data = raw.data)
+rm(raw.data)

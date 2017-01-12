@@ -2,6 +2,8 @@ clean <- function(data = NULL) {
 
     library(dplyr)
 
+    source("./codes/mutate-when.R")
+
     ## Rename datasettet
     RegData <- data
 
@@ -50,7 +52,7 @@ clean <- function(data = NULL) {
                                                as.POSIXct(RegData$FDato1,
                                                           format = formatdt), units = "days")/365))
 
-    ##  Alder del i kategorier
+    ## Alder del i kategorier
     alder.kat <- function(x, lower, upper, by,
                           sep = "-") {
         labs <- c(paste(seq(lower, upper - by, by = by),
@@ -68,23 +70,6 @@ clean <- function(data = NULL) {
 
     ## dplyr::mutate(.data = RegData,
     ##               SykehusKode <- replace(SykehusKode, Sykehus == "Ullevål universitetssykehus", 1))
-
-    ## RegData$SykehusKode <- NA
-    ## RegData$SykehusKode[RegData$Sykehus=="Ullevål universitetssykehus"] <- 1
-    ## RegData$SykehusKode[RegData$Sykehus=="Haugesund sjukehus"] <- 18
-    ## RegData$SykehusKode[RegData$Sykehus=="Sykehuset i Vestfold, Tønsberg"] <- 15
-    ## RegData$SykehusKode[RegData]
-    ## RegData$SykehusKode <- factor(RegData$SykehusKode)
-
-    mutate_when <- function(data, ...) {
-        dots <- eval(substitute(alist(...)))
-        for (i in seq(1, length(dots), by = 2)) {
-            condition <- eval(dots[[i]], envir = data)
-            mutations <- eval(dots[[i + 1]], envir = data[condition, , drop = FALSE])
-            data[condition, names(mutations)] <- mutations
-        }
-        data
-    }
 
     RegData <- RegData %>%
         mutate_when(Sykehus == "Ullevål universitetssykehus", list(SykehusKode = 1),
