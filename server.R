@@ -6,7 +6,7 @@ library(dplyr)
 
 function(input, output, session) {
 
-    filter.data <- reactive({
+    filter.data <- eventReactive(input$go, {
 
         ##------------------
         ## Filter

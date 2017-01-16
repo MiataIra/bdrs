@@ -8,6 +8,12 @@ fluidPage(
     sidebarLayout(
         sidebarPanel(
 
+            ## RapportValg
+            selectInput("RapValg", "Rapport valg:",
+                        choices = list("Landet" = 1, "Lokal" = 2, "Landet vs. øvrige" = 3),
+                        selected = 1),
+            conditionalPanel(
+                condition = "input.RapValg != 1",
             ## Sykehus
             selectInput("sykehus", "Valg sykehus:",
                         choices = list("Ullevål sykehus" = 1,
@@ -15,15 +21,10 @@ fluidPage(
                                        "Haugesund sjukehus" = 18,
                                        "St. Olavs Hospital" = 3,
                                        "Sykehuset Levanger" = 4),
-                        selected = 1),
+                        selected = 1)),
             ## DataValg
             selectInput("DataValg", "Valg data:",
                         choices = list("Første gang" = 1, "Årskontroll" = 2, "Poliklinisk" = 3, "Alle" = 4),
-                        selected = 1),
-
-            ## RapportValg
-            selectInput("RapValg", "Rapport valg:",
-                        choices = list("Landet" = 1, "Lokal" = 2, "Landet vs. øvrige" = 3),
                         selected = 1),
 
             ## Dato
@@ -62,8 +63,8 @@ fluidPage(
                                        "DB varighet" = 4)),
 
             ## Button
-            submitButton("Oppdatere")
-        ),
+            actionButton("go", "Oppdatere", icon("paper-plane"), #"floppy-o" - icon for lagring
+    style="color: #fff; background-color: #337ab7; border-color: #2e6da4")),
 
 
         mainPanel(
