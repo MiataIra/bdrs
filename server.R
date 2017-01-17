@@ -90,7 +90,7 @@ function(input, output, session) {
         if (input$RapValg != 1) {
             data <- mutate(RegDataValg, group = ifelse(input$sykehus == SykehusKode, 1, 2))
         } else {
-            data <- RegDataValg
+            data <- mutate(RegDataValg, group = 1)
         }
 
         data
