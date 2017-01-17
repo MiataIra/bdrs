@@ -6,7 +6,7 @@ library(dplyr)
 
 function(input, output, session) {
 
-    filter.data <- eventReactive(input$go, {
+    fil.data <- eventReactive(input$go, {
 
         ##------------------
         ## Filter
@@ -84,42 +84,66 @@ function(input, output, session) {
         }
 
 
+        RegDataValg
 
-        ## --- Lokal vs Landet
+    })
 
-        if (input$RapValg != 1) {
-            data <- mutate(RegDataValg, group = ifelse(input$sykehus == SykehusKode, 1, 2))
-        } else {
-            data <- mutate(RegDataValg, group = 1)
+    ## Lokal og landet
+    data.ll <- reactive({
+
+        source("./codes/prosent.R", local = TRUE)
+
+        if (input$RapValg == 2) {
+
+            data <- fil.data() %>%
+                mutate(group = ifelse(input$sykehus == SykehusKode, 1, 2)) %>%
+                filter(group == 1)
         }
 
-        data
+        if (input$RapValg == 1) {
 
+            data <- fil.data() %>%
+                mutate(group = 1)
+        }
+
+        tab.data <- prosent(data, "Variabel")
+        tab.data
+    })
+
+    ## Andre sykehus
+    data.andre <- reactive({
+
+        source("./codes/prosent.R", local = TRUE)
+
+        if (input$RapValg == 3) {
+
+            data <- fil.data() %>%
+                mutate(group = ifelse(input$sykehus == SykehusKode, 1, 2)) %>%
+                filter(group == 2)
+
+            tab.data <- prosent(data, "Variabel")
+        }
+        tab.data
     })
 
     output$test <- renderDataTable({
 
-
-        if (input$RapValg !=1) {
-
-            tab.data <- dplyr::filter(filter.data(), group == 1)
+        if (input$RapValg %in% 1:2){
+            data <- data.ll()
         } else {
-
-            tab.data <- filter.data()
+           data <- data.andre()
         }
-
-        tab.data
+        data
     })
-
 
     output$plot <- renderPlot({
 
-        data <- filter.data()
+        ## if (input$yaksen == 1) {
+        ##     yLab <- "Prosent (%)"
 
-        dtall <- data %>% group_by(Variabel) %>%
-            tally
+        ## }
 
-        ggplot(dtall, aes(Variabel, n)) + geom_bar(stat = "identity")
+        ggplot(data.ll(), aes(Variabel, n)) + geom_bar(stat = "identity")
 
     })
 
