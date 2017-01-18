@@ -2,8 +2,8 @@
 library(shiny)
 
 fluidPage(
-
-    titlePanel("Monitorering for BDR"),
+    tags$h2("Monitorering for BDR"),
+    tags$h4("Nasjonalt medisinsk kvalitetsregister for barne- og ungdomsdiabetes"),
 
     sidebarLayout(
         sidebarPanel(
@@ -14,14 +14,14 @@ fluidPage(
                         selected = 1),
             conditionalPanel(
                 condition = "input.RapValg != 1",
-            ## Sykehus
-            selectInput("sykehus", "Valg sykehus:",
-                        choices = list("Ullevål sykehus" = 1,
-                                       "Sykehuset i Vestfold" = 15,
-                                       "Haugesund sjukehus" = 18,
-                                       "St. Olavs Hospital" = 3,
-                                       "Sykehuset Levanger" = 4),
-                        selected = 1)),
+                ## Sykehus
+                selectInput("sykehus", "Valg sykehus:",
+                            choices = list("Ullevål sykehus" = 1,
+                                           "Sykehuset i Vestfold" = 15,
+                                           "Haugesund sjukehus" = 18,
+                                           "St. Olavs Hospital" = 3,
+                                           "Sykehuset Levanger" = 4),
+                            selected = 1)),
             ## DataValg
             selectInput("DataValg", "Valg data:",
                         choices = list("Første gang" = 1, "Årskontroll" = 2, "Poliklinisk" = 3, "Alle" = 4),
@@ -38,8 +38,8 @@ fluidPage(
 
             ## Kjønn
             selectInput("kjonn", "Kjønn",
-                         choices = list("Alle" = 3, "Jente" = 2, "Gutt" = 1),
-                         selected = 3),
+                        choices = list("Alle" = 3, "Jente" = 2, "Gutt" = 1),
+                        selected = 3),
 
 
             ## Alder
@@ -64,11 +64,15 @@ fluidPage(
 
             ## Button
             actionButton("go", "Oppdatere", icon("paper-plane"), #"floppy-o" - icon for lagring
-    style="color: #fff; background-color: #337ab7; border-color: #2e6da4")),
+                         style="color: #fff; background-color: #337ab7; border-color: #2e6da4")),
 
 
-        mainPanel(
-            plotOutput("plot"),
-            dataTableOutput("test"))
+    mainPanel(
+        tabsetPanel(type = "tab",
+                    tabPanel("Figur",
+                             plotOutput("plot")),
+
+                    tabPanel("Tabell",
+                             dataTableOutput("test"))))
 
     ))
