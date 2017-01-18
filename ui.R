@@ -70,6 +70,7 @@ fluidPage(
     mainPanel(
         tabsetPanel(type = "tab",
                     tabPanel("Figur",
+                             textOutput("test2"),
                              plotOutput("plot")),
 
                     tabPanel("Tabell",

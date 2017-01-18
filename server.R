@@ -84,7 +84,7 @@ function(input, output, session) {
         }
 
 
-        RegDataValg
+        fil.data <- list(data = RegDataValg, figT = figT, xLab = xLab, xBreaks = xBreaks)
 
     })
 
@@ -92,17 +92,18 @@ function(input, output, session) {
     data.ll <- reactive({
 
         source("./codes/prosent.R", local = TRUE)
+        data.inn <- fil.data()$data
 
         if (input$RapValg == 2) {
 
-            data <- fil.data() %>%
+            data <- data.inn %>%
                 mutate(group = ifelse(input$sykehus == SykehusKode, 1, 2)) %>%
                 filter(group == 1)
         }
 
         if (input$RapValg == 1) {
 
-            data <- fil.data() %>%
+            data <- data.inn %>%
                 mutate(group = 1)
         }
 
@@ -117,7 +118,7 @@ function(input, output, session) {
 
         if (input$RapValg == 3) {
 
-            data <- fil.data() %>%
+            data <- data.inn %>%
                 mutate(group = ifelse(input$sykehus == SykehusKode, 1, 2)) %>%
                 filter(group == 2)
 
@@ -125,6 +126,10 @@ function(input, output, session) {
         }
         tab.data
     })
+
+
+
+
 
     output$test <- renderDataTable({
 
@@ -134,6 +139,12 @@ function(input, output, session) {
            data <- data.andre()
         }
         data
+    })
+
+    output$test2 <- renderText({
+        text0 <- fil.data()$xLab
+        text <- fil.data()$figT
+        paste0(text0, text)
     })
 
     output$plot <- renderPlot({
