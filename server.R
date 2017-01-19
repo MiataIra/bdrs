@@ -13,9 +13,12 @@ function(input, output, session) {
         ##------------------
 
         ## Alder
-        alderVec <- min(input$alder):max(input$alder)
+        minAlder <- min(input$alder)
+        maxAlder <- max(input$alder)
+        alderVec <- minAlder:maxAlder
 
         ## Kjonn
+        kjonn <- as.integer(input$kjonn)
         kjonnVec <- if (input$kjonn != 3) {input$kjonn} else { kjonnVec = 1:2 }
 
         ## Dato (datoFra, datoTil)
@@ -25,12 +28,13 @@ function(input, output, session) {
                        as.Date(datoTil, format = "%Y-%m-%d"), "day")
 
         ## Diabetes type 1
-        dbType <- input$dbtype
+        dbType <- as.integer(input$dbtype)
         diaVec <- if (dbType == 1) {dbType} else {diaVec = 1:2}
 
         ## Registrering (dataValg) Førstegangreg, årskontroll, poliklinisk etc
-        dataValg <- input$DataValg
+        dataValg <- as.integer(input$DataValg)
         regVec <- if (dataValg != 4) {dataValg} else {regVec <- 1:3}
+
 
         RegData <- dplyr::filter(data,
                                  Alder %in% alderVec,
@@ -38,6 +42,35 @@ function(input, output, session) {
                                  innYear %in% datoVec,
                                  regValg %in% regVec,
                                  diaType1 %in% diaVec)
+
+        ##----------------------------
+        ## Figurtekst
+        ##----------------------------
+
+        figTxt <- c(paste0('Data for ', paste0(': ', c('Førstegangsregistrering',
+                                                       'Årskontroll',
+                                                       'Poliklinisk',
+                                                       'Alle type kontroller')[dataValg])),
+                    if ((minAlder > 0) || (maxAlder < 100)) {
+                        paste0('Alderskategori: ', minAlder, ' til ', maxAlder, ' år ')
+                    },
+
+                    if (kjonn %in% 1:2) {
+                        paste0('Kjønn: ', c('Gutter', 'Jenter')[kjonn])
+                    },
+
+                    paste0('Diabetes: ', c('Type 1', 'Alle typer')[dbType]),
+
+                    paste0('Periode: ', if (min(RegData$innYear, na.rm = TRUE) > datoFra) {
+                                            format(min(RegData$innYear, na.rm = TRUE), "%d %b %Y")
+                                        } else {
+                                            format(as.Date(datoFra), format = "%d %b %Y")
+                                        }, ' - ',
+                           if (max(RegData$innYear, na.rm = TRUE) < datoTil) {
+                               format(max(RegData$innYear, na.rm = TRUE), "%d %b %Y")
+                           } else {
+                               format(as.Date(datoTil), "%d %b %Y")
+                           }))
 
 
         ##-----------------------------
@@ -84,7 +117,7 @@ function(input, output, session) {
         }
 
 
-        fil.data <- list(data = RegDataValg, figT = figT, xLab = xLab, xBreaks = xBreaks)
+        fil.data <- list(data = RegDataValg, figTxt = figTxt, figT = figT, xLab = xLab, xBreaks = xBreaks)
 
     })
 
@@ -115,6 +148,7 @@ function(input, output, session) {
     data.andre <- reactive({
 
         source("./codes/prosent.R", local = TRUE)
+        data.inn <- fil.data()$data
 
         if (input$RapValg == 3) {
 
@@ -141,11 +175,7 @@ function(input, output, session) {
         data
     })
 
-    output$test2 <- renderText({
-        text0 <- fil.data()$xLab
-        text <- fil.data()$figT
-        paste0(text0, text)
-    })
+
 
     output$plot <- renderPlot({
 
@@ -157,6 +187,21 @@ function(input, output, session) {
         ggplot(data.ll(), aes(Variabel, n)) + geom_bar(stat = "identity")
 
     })
+
+     output$test2 <- renderText({
+        text0 <- fil.data()$xLab
+        text <- fil.data()$figT
+
+        paste0(text0, '  ---  ', text)
+     })
+
+
+    output$test3 <- renderText({
+
+        text <- fil.data()$figTxt
+        paste0(text)
+    })
+
 
     session$onSessionEnded(stopApp)
 }

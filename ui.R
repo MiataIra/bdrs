@@ -57,10 +57,10 @@ fluidPage(
 
             ## Y-Aksen
             selectInput("yaksen", "Valg analsyen:",
-                        choices = list("Prosent" = 1,
-                                       "Antall" = 2,
-                                       "HbAlc" = 3,
-                                       "DB varighet" = 4)),
+                        choices = list("Prosent",
+                                       "Antall",
+                                       "HbAlc",
+                                       "DB varighet")),
 
             ## Button
             actionButton("go", "Oppdatere", icon("paper-plane"), #"floppy-o" - icon for lagring
@@ -70,10 +70,11 @@ fluidPage(
     mainPanel(
         tabsetPanel(type = "tab",
                     tabPanel("Figur",
-                             textOutput("test2"),
-                             plotOutput("plot")),
+                             plotOutput("plot"),
+                             textOutput("test2")),
 
                     tabPanel("Tabell",
-                             dataTableOutput("test"))))
+                             dataTableOutput("test"),
+                             textOutput("test3"))))
 
     ))
