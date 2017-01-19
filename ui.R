@@ -74,7 +74,7 @@ fluidPage(
                              textOutput("test2")),
 
                     tabPanel("Tabell",
-                             dataTableOutput("test"),
+                             tableOutput("test"),
                              textOutput("test3"))))
 
     ))

@@ -163,9 +163,7 @@ function(input, output, session) {
 
 
 
-
-
-    output$test <- renderDataTable({
+    output$test <- renderTable({
 
         if (input$RapValg %in% 1:2){
             data <- data.ll()
@@ -185,6 +183,7 @@ function(input, output, session) {
         ## }
 
         ggplot(data.ll(), aes(Variabel, n)) + geom_bar(stat = "identity")
+
 
     })
 
