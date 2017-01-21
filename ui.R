@@ -3,8 +3,8 @@ library(shiny)
 library(shinythemes)
 
 fluidPage(
-    theme = shinytheme("spacelab"),
-    tags$h2("Monitorering for BDR"),
+    theme = shinytheme("readable"),
+    tags$h3("Resultattjenester for BDR"),
     tags$h4("Nasjonalt medisinsk kvalitetsregister for barne- og ungdomsdiabetes"),
 
     sidebarLayout(
@@ -66,20 +66,27 @@ fluidPage(
 
             ## Button
             actionButton("go", "Oppdatere", icon("refresh"), #"floppy-o" - icon for lagring
-                         style="color: #fff; background-color: #337ab7; border-color: #2e6da4")),
+                         style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
+
+    downloadButton("rapport", "Rapport")),
 
 
     mainPanel(
         tabsetPanel(type = "tab",
                     tabPanel("Figur",
                              h3(""),
+                             h4(""),
                              plotOutput("plot"),
                              textOutput("test2")),
 
                     tabPanel("Tabell",
-                             h3("Tabell for figuren"),
+                             h4("Tabell for figuren"),
                              h4(""),
                              dataTableOutput("test"),
-                             textOutput("test3"))))
+                             textOutput("test3")),
+                    tabPanel("Indikator",
+                             h4("Indikator for valgt region"),
+                             h4(""),
+                             plotOutput("plot2"))))
 
     ))
