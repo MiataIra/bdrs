@@ -129,6 +129,7 @@ function(input, output, session) {
 
         if (input$RapValg == 2) {
 
+
             data <- data.inn %>%
                 mutate(group = ifelse(input$sykehus == SykehusKode, 1, 2)) %>%
                 filter(group == 1)

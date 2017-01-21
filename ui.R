@@ -1,7 +1,9 @@
 
 library(shiny)
+library(shinythemes)
 
 fluidPage(
+    theme = shinytheme("spacelab"),
     tags$h2("Monitorering for BDR"),
     tags$h4("Nasjonalt medisinsk kvalitetsregister for barne- og ungdomsdiabetes"),
 
@@ -63,17 +65,20 @@ fluidPage(
                                        "DB varighet")),
 
             ## Button
-            actionButton("go", "Oppdatere", icon("paper-plane"), #"floppy-o" - icon for lagring
+            actionButton("go", "Oppdatere", icon("refresh"), #"floppy-o" - icon for lagring
                          style="color: #fff; background-color: #337ab7; border-color: #2e6da4")),
 
 
     mainPanel(
         tabsetPanel(type = "tab",
                     tabPanel("Figur",
+                             h3(""),
                              plotOutput("plot"),
                              textOutput("test2")),
 
                     tabPanel("Tabell",
+                             h3("Tabell for figuren"),
+                             h4(""),
                              dataTableOutput("test"),
                              textOutput("test3"))))
 
