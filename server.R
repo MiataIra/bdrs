@@ -116,8 +116,12 @@ function(input, output, session) {
             xBreaks = levels(RegDataValg$Variabel)
         }
 
-
-        fil.data <- list(data = RegDataValg, figTxt = figTxt, figT = figT, xLab = xLab, xBreaks = xBreaks)
+        fil.data <- list(data = RegDataValg,
+                         figTxt = figTxt,
+                         figT = figT,
+                         xLab = xLab,
+                         xBreaks = xBreaks,
+                         xScale = xScale)
 
     })
 
@@ -126,23 +130,32 @@ function(input, output, session) {
 
         source("./codes/prosent.R", local = TRUE)
         data.inn <- fil.data()$data
+        RapValg <- as.integer(input$RapValg)
 
-        if (input$RapValg == 2) {
+        if (RapValg == 2) {
 
+            ## data <- dplyr::filter(data.inn, SykehusKode == sykehus)
 
             data <- data.inn %>%
                 mutate(group = ifelse(input$sykehus == SykehusKode, 1, 2)) %>%
                 filter(group == 1)
+
+            sykNavn <- data$Sykehus[1]
+            N <- dim(data)[1]
+            sykehusNavn <- paste0(sykNavn, " (N = ", N, ") ")
         }
 
         if (input$RapValg == 1) {
 
             data <- data.inn %>%
                 mutate(group = 1)
+
+            N <- dim(data.inn)[1]
+            sykehusNavn <- paste0("Hele landet (N = ", N, ") ")
         }
 
         tab.data <- prosent(data, "Variabel")
-        tab.data
+        data.list <- list(data = tab.data, sykehusNavn = sykehusNavn, N = N)
     })
 
     ## Andre sykehus
@@ -151,42 +164,166 @@ function(input, output, session) {
         source("./codes/prosent.R", local = TRUE)
         data.inn <- fil.data()$data
 
-        if (input$RapValg == 3) {
+        data <- data.inn %>%
+            mutate(group = ifelse(input$sykehus == SykehusKode, 1, 2)) %>%
+            filter(group == 2)
 
-            data <- data.inn %>%
-                mutate(group = ifelse(input$sykehus == SykehusKode, 1, 2)) %>%
-                filter(group == 2)
+        ## data.andre <- dplyr::filter(data.inn, SykehusKode != sykehus)
 
-            tab.data <- prosent(data, "Variabel")
-        }
-        tab.data
+        andreN <- dim(data)[1]
+        sykehusAndre <- paste0("Øvrige sykehus (N = ", andreN, ") ")
+
+        tab.data <- prosent(data, "Variabel")
+
+        data.list <- list(data = tab.data, sykehusAndre = sykehusAndre, andreN = andreN)
     })
 
-
-
-
-
-    output$test <- renderDataTable({
-
-        if (input$RapValg %in% 1:2){
-            data <- data.ll()
-        } else {
-           data <- data.andre()
-        }
-        data
-    })
 
 
     output$plot <- renderPlot({
 
-        ## if (input$yaksen == 1) {
-        ##     yLab <- "Prosent (%)"
 
-        ## }
+        rapvalg <- as.integer(input$RapValg)
+        xScale <- fil.data()$xScale
+        figdata <- data.ll()$data
+        figdata2 <- data.andre()$data
+        yAksen <- switch(input$yaksen,
+                         "Prosent" = 1,
+                         "Antall" = 2)
 
-        ggplot(data.ll(), aes(Variabel, n)) + geom_bar(stat = "identity")
+        sykehusNavn <- data.ll()$sykehusNavn
+        N <- data.ll()$N
+        andreN <- data.andre()$andreN
+        sykehusAndre <- data.andre()$sykehusAndre
+
+        titBlank <- ""
+        figTitle <- c(fil.data()$figT, fil.data()$figTxt)
+        figsubT = paste(figTitle, collapse = "\n")
+        txtSpace = length(fil.data()$figTxt)
+
+        xLab <- fil.data()$xLab
+        yLab <- switch(input$yaksen,
+                       "Prosent" = "Prosent (%)",
+                       "Antall" = "Antall pasienter")
+
+        ## if (input$yaksen == "1") yLab="Prosent (%)"
+        ## if (input$yaksen == "2") yLab="Antall pasienter"
+
+
+        col1 <- "#6699CC"
+        col2 <- "#000099"
+        coll <- "#999999" #line color
+
+
+        ## -- ymax for y-aksen -- ##
+        ## Gi god plass mellom legend og figuren
+        maxx <-  max(figdata$yAksen, na.rm = TRUE)
+        ym <- maxx/6
+        ymax <- maxx + ym
+
+        if (input$RapValg == "3") {
+            max1 <- max(figdata2$yAksen, na.rm = TRUE)
+
+            if (max1 > maxx) {
+                ym1 <- max1/6
+                ymax <- max1 + ym1
+            } else {
+                ymax <- ymax
+            }
+        }
+
+
+
+        ## Figur
+        ffig <- ggplot2::ggplot(NULL, aes(x = Variabel, y = yAksen)) +
+            ggplot2::geom_bar(data = figdata, aes(fill = sykehusNavn), stat = "identity") +
+            ggplot2::scale_fill_manual(name = " ", values = col1) +
+            ggplot2::coord_cartesian(ylim = c(1,ymax)) +
+            ggplot2::scale_y_continuous(expand = c(0,0)) +
+            ggplot2::labs( x =xLab, y = yLab) +
+            ggplot2::ggtitle(bquote(atop(.(""),atop(.(figsubT), ""))))
+
+            ## Theme
+            theme1 <- ggplot2::theme(plot.margin = unit(c(txtSpace, 1,1,1), "lines"),
+                                     plot.title = element_text(hjust = 0, size=15),
+                                     legend.position = 'top',
+                                     legend.text = element_text(size = 11),
+                                     legend.title = element_blank(),
+                                     legend.box = "horizontal",
+                                     panel.background = element_blank(),
+                                     panel.border = element_blank(),
+                                     panel.grid.major.y = element_line(color = coll, size = .3, linetype = "dashed"),
+                                     axis.title = element_text(face = "bold", size = 11),
+                                     axis.ticks.y = element_line(size = .3, color = coll),
+                                     axis.ticks.x = element_blank(),
+                                     axis.text = element_text(size = 10),
+                                     axis.text.y = element_text(vjust = 0),
+                                     axis.line.x = element_line(size =.5))
+
+
+
+            ## ============================
+            ## Figure for prosent og antall
+            ## ============================
+
+
+            ## -- Kategoriske variabler --##
+
+            if (rapvalg %in% 1:2 && yAksen == 1 && xScale == 2) {
+
+                figdata$yAksen=as.numeric(sprintf("%.1f", figdata$yAksen))
+
+                regfig <- ffig +
+                    ggplot2::geom_text(data = figdata, aes(label = yAksen, vjust = -0.25)) +
+                    theme1
+            }
+
+            if (rapvalg %in% 1:2 && yAksen == 2 && xScale == 2) {
+
+                figdata$yAksen=as.numeric(sprintf("%.f", figdata$yAksen))
+
+                regfig <- ffig +
+                    ggplot2::geom_text(data = figdata, aes(label = yAksen, vjust = -0.25)) +
+                    theme1
+
+            }
+
+            if (rapvalg == 3 && yAksen == 1 && xScale == 2) {
+
+                figdata2$yAksen=as.numeric(sprintf("%.1f", figdata2$yAksen))
+
+                regfig <- ffig +
+                    ggplot2::geom_point(data = figdata2, aes(color = sykehusAndre),
+                                        shape = 18, size = 6, stat = "identity" ) +
+                    ggplot2::scale_color_manual(name = " ", values = col2) +
+                    ggplot2::guides(color = guide_legend(order = 2),
+                                    fill = guide_legend(order = 1)) +
+                    theme1
+
+            }
+
+            if (rapvalg == 3 && yAksen == 2 && xScale == 2) {
+
+                figdata2$yAksen=as.numeric(sprintf("%.f", figdata2$yAksen))
+
+
+                regfig <- ffig +
+                    ggplot2::geom_point(data = figdata2, aes(color = sykehusAndre),
+                                        shape = 18, size = 6, stat = "identity" ) +
+                    ggplot2::scale_color_manual(name = " ", values = col2) +
+                    ggplot2::guides(color = guide_legend(order = 2),
+                                    fill = guide_legend(order = 1)) +
+                    theme1
+
+            }
+
+
+            regfig
+
+            ## ggplot(data.ll()$data, aes(Variabel, n)) + geom_bar(stat = "identity")
 
     })
+
 
     output$plot2 <- renderPlot({
 
@@ -210,19 +347,31 @@ function(input, output, session) {
 
     })
 
-     output$test2 <- renderText({
-        text0 <- fil.data()$xLab
-        text <- fil.data()$figT
 
-        paste0(text0, '  ---  ', text)
-     })
+    output$test <- renderDataTable({
 
-
-    output$test3 <- renderText({
-
-        text <- fil.data()$figTxt
-        paste0(text)
+        if (input$RapValg %in% 1:2){
+            data <- data.ll()$data
+        } else {
+            data <- data.andre()$data
+        }
+        data
     })
+
+
+    ## output$test2 <- renderText({
+    ##     text0 <- fil.data()$xLab
+    ##     text <- fil.data()$figT
+
+    ##     paste0(text0, '  ---  ', text)
+    ## })
+
+
+    ## output$test3 <- renderText({
+
+    ##     text <- fil.data()$figTxt
+    ##     paste0(text)
+    ## })
 
 
     session$onSessionEnded(stopApp)

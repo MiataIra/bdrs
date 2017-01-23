@@ -76,14 +76,16 @@ fluidPage(
                     tabPanel("Figur",
                              h3(""),
                              h4(""),
-                             plotOutput("plot"),
-                             textOutput("test2")),
+                             plotOutput("plot")
+                             ## textOutput("test2")
+                             ),
 
                     tabPanel("Tabell",
                              h4("Tabell for figuren"),
                              h4(""),
-                             dataTableOutput("test"),
-                             textOutput("test3")),
+                             dataTableOutput("test")
+                             ## textOutput("test3")
+                             ),
                     tabPanel("Indikator",
                              h4("Indikator for valgt region"),
                              h4(""),
