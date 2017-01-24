@@ -76,7 +76,7 @@ fluidPage(
                     tabPanel("Figur",
                              h3(""),
                              h4(""),
-                             plotOutput("plot")
+                             plotOutput("plot", width = "100%", height = 500)
                              ## textOutput("test2")
                              ),
 
@@ -89,6 +89,6 @@ fluidPage(
                     tabPanel("Indikator",
                              h4("Indikator for valgt region"),
                              h4(""),
-                             plotOutput("plot2"))))
+                             plotOutput("plot2", width = "100%", height = 600))))
 
     ))
