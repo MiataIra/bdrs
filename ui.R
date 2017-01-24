@@ -91,6 +91,6 @@ fluidPage(
                     tabPanel("Indikator",
                              h4("Indikator for valgt region"),
                              h4(""),
-                             plotOutput("plot2"))))
+                             plotOutput("plot2", width = "100%", height = 600))))
 
     ))
