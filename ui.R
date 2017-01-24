@@ -76,8 +76,9 @@ fluidPage(
                     tabPanel("Figur",
                              h3(""),
                              h4(""),
-                             plotOutput("plot")
-                             ## textOutput("test2")
+                             highchartOutput("plot", height = "450px"),
+                             h4(""),
+                             textOutput("testsub")
                              ),
 
                     tabPanel("Tabell",

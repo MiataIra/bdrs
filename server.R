@@ -1,6 +1,7 @@
 
 library(shiny)
 library(ggplot2)
+library(highcharter)
 library(dplyr)
 
 
@@ -52,16 +53,16 @@ function(input, output, session) {
                                                        'Poliklinisk',
                                                        'Alle type kontroller')[dataValg])),
                     if ((minAlder > 0) || (maxAlder < 100)) {
-                        paste0('Alderskategori: ', minAlder, ' til ', maxAlder, ' år ')
+                        paste0(' Alderskategori: ', minAlder, ' til ', maxAlder, ' år ')
                     },
 
                     if (kjonn %in% 1:2) {
-                        paste0('Kjønn: ', c('Gutter', 'Jenter')[kjonn])
+                        paste0(' Kjønn: ', c('Gutter', 'Jenter')[kjonn])
                     },
 
-                    paste0('Diabetes: ', c('Type 1', 'Alle typer')[dbType]),
+                    paste0(' Diabetes: ', c('Type 1', 'Alle typer')[dbType]),
 
-                    paste0('Periode: ', if (min(RegData$innYear, na.rm = TRUE) > datoFra) {
+                    paste0(' Periode: ', if (min(RegData$innYear, na.rm = TRUE) > datoFra) {
                                             format(min(RegData$innYear, na.rm = TRUE), "%d %b %Y")
                                         } else {
                                             format(as.Date(datoFra), format = "%d %b %Y")
@@ -98,7 +99,7 @@ function(input, output, session) {
             xScale = 2
             valgtVar = "AlderKat"
             RegDataValg <- sykSamlikFn(valgtVar)
-            figT <- "Figur: Fordeling av alder"
+            figT <- "Fordeling av alder"
             xLab = "Alderskategorier (år)"
             xBreaks = levels(RegDataValg$Variabel)
         }
@@ -111,7 +112,7 @@ function(input, output, session) {
             ## levels = 1:2
             ## labels = c("Gutt", "Jente")
             ## RegDataValg$Variabel <- factor(RegDataValg$Variabel, levels = levels, labels = labels)
-            figT <- "Figur: Fordeling av kjønn"
+            figT <- "Fordeling av kjønn"
             xLab = "Kjønn"
             xBreaks = levels(RegDataValg$Variabel)
         }
@@ -125,13 +126,15 @@ function(input, output, session) {
 
     })
 
-    ## Lokal og landet
-    data.ll <- reactive({
+
+    data.123 <- reactive({
 
         source("./codes/prosent.R", local = TRUE)
         data.inn <- fil.data()$data
         RapValg <- as.integer(input$RapValg)
 
+
+        ## Lokal
         if (RapValg == 2) {
 
             ## data <- dplyr::filter(data.inn, SykehusKode == sykehus)
@@ -145,7 +148,8 @@ function(input, output, session) {
             sykehusNavn <- paste0(sykNavn, " (N = ", N, ") ")
         }
 
-        if (input$RapValg == 1) {
+        ## Landet
+        if (RapValg == 1) {
 
             data <- data.inn %>%
                 mutate(group = 1)
@@ -154,52 +158,62 @@ function(input, output, session) {
             sykehusNavn <- paste0("Hele landet (N = ", N, ") ")
         }
 
-        tab.data <- prosent(data, "Variabel")
-        data.list <- list(data = tab.data, sykehusNavn = sykehusNavn, N = N)
+        ## Andre vs. lokal
+        if (RapValg == 3) {
+
+            data.2 <- data.inn %>%
+                mutate(group = ifelse(input$sykehus == SykehusKode, 1, 2)) %>%
+                filter(group == 2)
+
+            ## data.andre <- dplyr::filter(data.inn, SykehusKode != sykehus)
+
+            andreN <- dim(data.2)[1]
+            sykehusAndre <- paste0("Øvrige sykehus (N = ", andreN, ") ")
+
+        }
+
+        ## samler alle data
+        if (RapValg %in% 1:2) {
+            tab.data.ll <- prosent(data, "Variabel")
+        } else {
+            tab.data.ll <- NULL
+            sykehusNavn <- NULL
+            N <- NULL
+        }
+
+        if (RapValg == 3) {
+            tab.data2 <- prosent(data.2, "Variabel")
+        } else {
+            tab.data2 <- NULL
+            sykehusAndre <- NULL
+            andreN <- NULL
+        }
+
+        data.list <- list(data.ll = tab.data.ll, data.2 = tab.data2,
+                          sykehus1 = sykehusNavn, sykehus2 = sykehusAndre,
+                          n1 = N, n2 = andreN)
+
     })
 
-    ## Andre sykehus
-    data.andre <- reactive({
 
-        source("./codes/prosent.R", local = TRUE)
-        data.inn <- fil.data()$data
-
-        data <- data.inn %>%
-            mutate(group = ifelse(input$sykehus == SykehusKode, 1, 2)) %>%
-            filter(group == 2)
-
-        ## data.andre <- dplyr::filter(data.inn, SykehusKode != sykehus)
-
-        andreN <- dim(data)[1]
-        sykehusAndre <- paste0("Øvrige sykehus (N = ", andreN, ") ")
-
-        tab.data <- prosent(data, "Variabel")
-
-        data.list <- list(data = tab.data, sykehusAndre = sykehusAndre, andreN = andreN)
-    })
-
-
-
-    output$plot <- renderPlot({
+    output$plot <- renderHighchart({
 
 
         rapvalg <- as.integer(input$RapValg)
         xScale <- fil.data()$xScale
-        figdata <- data.ll()$data
-        figdata2 <- data.andre()$data
+        figdata <- data.123()$data.ll
+        figdata2 <- data.123()$data.2
         yAksen <- switch(input$yaksen,
                          "Prosent" = 1,
                          "Antall" = 2)
 
-        sykehusNavn <- data.ll()$sykehusNavn
-        N <- data.ll()$N
-        andreN <- data.andre()$andreN
-        sykehusAndre <- data.andre()$sykehusAndre
+        sykehusNavn <- data.123()$sykehus1
+        N <- data.123()$n1
+        andreN <- data.123()$n2
+        sykehusAndre <- data.123()$sykehus2
 
-        titBlank <- ""
-        figTitle <- c(fil.data()$figT, fil.data()$figTxt)
-        figsubT = paste(figTitle, collapse = "\n")
-        txtSpace = length(fil.data()$figTxt)
+        figTitle <- fil.data()$figT
+        figSubT <- paste(fil.data()$figTxt, sep = "  ")
 
         xLab <- fil.data()$xLab
         yLab <- switch(input$yaksen,
@@ -215,112 +229,169 @@ function(input, output, session) {
         coll <- "#999999" #line color
 
 
-        ## -- ymax for y-aksen -- ##
-        ## Gi god plass mellom legend og figuren
-        maxx <-  max(figdata$yAksen, na.rm = TRUE)
-        ym <- maxx/6
-        ymax <- maxx + ym
+        ##---------------
+        ## Figur
+        ##---------------
 
-        if (input$RapValg == "3") {
-            max1 <- max(figdata2$yAksen, na.rm = TRUE)
 
-            if (max1 > maxx) {
-                ym1 <- max1/6
-                ymax <- max1 + ym1
-            } else {
-                ymax <- ymax
-            }
+        ## -- Kategoriske variabler --##
+
+        if (rapvalg %in% 1:2 && yAksen == 1 && xScale == 2) {
+
+            figdata$yAksen=as.numeric(sprintf("%.1f", figdata$yAksen))
+
+            fig.plot <- hchart(figdata, "column", hcaes(x = Variabel, y = yAksen),
+                               color = col1) %>%
+                hc_title(text = figTitle, style = list(color = "black", fontSize = "25px")) %>%
+                hc_subtitle(text = figSubT) %>%
+                hc_xAxis(title = list(text = xLab)) %>%
+                hc_yAxis(title = list(text = yLab))
+        }
+
+        if (rapvalg %in% 1:2 && yAksen == 2 && xScale == 2) {
+
+            figdata$yAksen=as.numeric(sprintf("%.f", figdata$yAksen))
+
+            fig.plot <- hchart(figdata, "column", hcaes(x = Variabel, y = yAksen),
+                               color = col1) %>%
+                hc_title(text = figTitle, style = list(color = "black", fontSize = "25px")) %>%
+                hc_subtitle(text = figSubT) %>%
+                hc_xAxis(title = list(text = xLab)) %>%
+                hc_yAxis(title = list(text = yLab))
         }
 
 
+        ##-- lokal vs. andre
 
-        ## Figur
-        ffig <- ggplot2::ggplot(NULL, aes(x = Variabel, y = yAksen)) +
-            ggplot2::geom_bar(data = figdata, aes(fill = sykehusNavn), stat = "identity") +
-            ggplot2::scale_fill_manual(name = " ", values = col1) +
-            ggplot2::coord_cartesian(ylim = c(1,ymax)) +
-            ggplot2::scale_y_continuous(expand = c(0,0)) +
-            ggplot2::labs( x =xLab, y = yLab) +
-            ggplot2::ggtitle(bquote(atop(.(""),atop(.(figsubT), ""))))
+        if (rapvalg == 3 && yAksen == 1 && xScale == 2) {
 
-            ## Theme
-            theme1 <- ggplot2::theme(plot.margin = unit(c(txtSpace, 1,1,1), "lines"),
-                                     plot.title = element_text(hjust = 0, size=15),
-                                     legend.position = 'top',
-                                     legend.text = element_text(size = 11),
-                                     legend.title = element_blank(),
-                                     legend.box = "horizontal",
-                                     panel.background = element_blank(),
-                                     panel.border = element_blank(),
-                                     panel.grid.major.y = element_line(color = coll, size = .3, linetype = "dashed"),
-                                     axis.title = element_text(face = "bold", size = 11),
-                                     axis.ticks.y = element_line(size = .3, color = coll),
-                                     axis.ticks.x = element_blank(),
-                                     axis.text = element_text(size = 10),
-                                     axis.text.y = element_text(vjust = 0),
-                                     axis.line.x = element_line(size =.5))
+            figdata2$yAksen=as.numeric(sprintf("%.1f", figdata2$yAksen))
+
+            figdata1 <- data.123()$data.ll
+            figdata1$yAksen=as.numeric(sprintf("%.1f", figdata1$yAksen))
 
 
+            fig.plot <- highchart() %>%
+                hc_title(text = figTitle, style = list(color = "black")) %>%
+                hc_subtitle(text = figSubT) %>%
+                hc_xAxis(categories = figdata$yAksen, title = list(text = xLab)) %>%
+                hc_yAxis(title = list(text = yLab)) %>%
+                hc_add_series(figdata1$Variabel)
 
-            ## ============================
-            ## Figure for prosent og antall
-            ## ============================
+        }
 
+        if (rapvalg == 3 && yAksen == 2 && xScale == 2) {
 
-            ## -- Kategoriske variabler --##
+            figdata2$yAksen=as.numeric(sprintf("%.f", figdata2$yAksen))
 
-            if (rapvalg %in% 1:2 && yAksen == 1 && xScale == 2) {
-
-                figdata$yAksen=as.numeric(sprintf("%.1f", figdata$yAksen))
-
-                regfig <- ffig +
-                    ggplot2::geom_text(data = figdata, aes(label = yAksen, vjust = -0.25)) +
-                    theme1
-            }
-
-            if (rapvalg %in% 1:2 && yAksen == 2 && xScale == 2) {
-
-                figdata$yAksen=as.numeric(sprintf("%.f", figdata$yAksen))
-
-                regfig <- ffig +
-                    ggplot2::geom_text(data = figdata, aes(label = yAksen, vjust = -0.25)) +
-                    theme1
-
-            }
-
-            if (rapvalg == 3 && yAksen == 1 && xScale == 2) {
-
-                figdata2$yAksen=as.numeric(sprintf("%.1f", figdata2$yAksen))
-
-                regfig <- ffig +
-                    ggplot2::geom_point(data = figdata2, aes(color = sykehusAndre),
-                                        shape = 18, size = 6, stat = "identity" ) +
-                    ggplot2::scale_color_manual(name = " ", values = col2) +
-                    ggplot2::guides(color = guide_legend(order = 2),
-                                    fill = guide_legend(order = 1)) +
-                    theme1
-
-            }
-
-            if (rapvalg == 3 && yAksen == 2 && xScale == 2) {
-
-                figdata2$yAksen=as.numeric(sprintf("%.f", figdata2$yAksen))
+            figdata1 <- data.123()$data.ll
+            figdata1$yAksen=as.numeric(sprintf("%.f", figdata1$yAksen))
 
 
-                regfig <- ffig +
-                    ggplot2::geom_point(data = figdata2, aes(color = sykehusAndre),
-                                        shape = 18, size = 6, stat = "identity" ) +
-                    ggplot2::scale_color_manual(name = " ", values = col2) +
-                    ggplot2::guides(color = guide_legend(order = 2),
-                                    fill = guide_legend(order = 1)) +
-                    theme1
-
-            }
+            fig.plot <- highchart() %>%
+                hc_title(text = figTitle, style = list(color = "black")) %>%
+                hc_subtitle(text = figSubT) %>%
+                hc_xAxis(categories = figdata$yAksen, title = list(text = xLab)) %>%
+                hc_yAxis(title = list(text = yLab)) %>%
+                hc_add_series(figdata1$Variabel)
 
 
-            regfig
+        }
 
-            ## ggplot(data.ll()$data, aes(Variabel, n)) + geom_bar(stat = "identity")
+        fig.plot
+
+
+        ##----------------------
+        ## ggplot2 figur
+        ##---------------------
+
+        ## ## Figur
+        ## ffig <- ggplot2::ggplot(NULL, aes(x = Variabel, y = yAksen)) +
+        ##     ggplot2::geom_bar(data = figdata, aes(fill = sykehusNavn), stat = "identity") +
+        ##     ggplot2::scale_fill_manual(name = " ", values = col1) +
+        ##     ggplot2::coord_cartesian(ylim = c(1,ymax)) +
+        ##     ggplot2::scale_y_continuous(expand = c(0,0)) +
+        ##     ggplot2::labs( x =xLab, y = yLab) +
+        ##     ggplot2::ggtitle(bquote(atop(.(""),atop(.(figsubT), ""))))
+
+        ##     ## Theme
+        ##     theme1 <- ggplot2::theme(plot.margin = unit(c(txtSpace, 1,1,1), "lines"),
+        ##                              plot.title = element_text(hjust = 0, size=15),
+        ##                              legend.position = 'top',
+        ##                              legend.text = element_text(size = 11),
+        ##                              legend.title = element_blank(),
+        ##                              legend.box = "horizontal",
+        ##                              panel.background = element_blank(),
+        ##                              panel.border = element_blank(),
+        ##                              panel.grid.major.y = element_line(color = coll, size = .3, linetype = "dashed"),
+        ##                              axis.title = element_text(face = "bold", size = 11),
+        ##                              axis.ticks.y = element_line(size = .3, color = coll),
+        ##                              axis.ticks.x = element_blank(),
+        ##                              axis.text = element_text(size = 10),
+        ##                              axis.text.y = element_text(vjust = 0),
+        ##                              axis.line.x = element_line(size =.5))
+
+
+
+        ##     ## ============================
+        ##     ## Figure for prosent og antall
+        ##     ## ============================
+
+
+        ##     ## -- Kategoriske variabler --##
+
+        ##     if (rapvalg %in% 1:2 && yAksen == 1 && xScale == 2) {
+
+        ##         figdata$yAksen=as.numeric(sprintf("%.1f", figdata$yAksen))
+
+        ##         regfig <- ffig +
+        ##             ggplot2::geom_text(data = figdata, aes(label = yAksen, vjust = -0.25)) +
+        ##             theme1
+        ##     }
+
+        ##     if (rapvalg %in% 1:2 && yAksen == 2 && xScale == 2) {
+
+        ##         figdata$yAksen=as.numeric(sprintf("%.f", figdata$yAksen))
+
+        ##         regfig <- ffig +
+        ##             ggplot2::geom_text(data = figdata, aes(label = yAksen, vjust = -0.25)) +
+        ##             theme1
+
+        ##     }
+
+        ##     if (rapvalg == 3 && yAksen == 1 && xScale == 2) {
+
+        ##         figdata2$yAksen=as.numeric(sprintf("%.1f", figdata2$yAksen))
+
+        ##         regfig <- ffig +
+        ##             ggplot2::geom_point(data = figdata2, aes(color = sykehusAndre),
+        ##                                 shape = 18, size = 6, stat = "identity" ) +
+        ##             ggplot2::scale_color_manual(name = " ", values = col2) +
+        ##             ggplot2::guides(color = guide_legend(order = 2),
+        ##                             fill = guide_legend(order = 1)) +
+        ##             theme1
+
+        ##     }
+
+        ##     if (rapvalg == 3 && yAksen == 2 && xScale == 2) {
+
+        ##         figdata2$yAksen=as.numeric(sprintf("%.f", figdata2$yAksen))
+
+
+        ##         regfig <- ffig +
+        ##             ggplot2::geom_point(data = figdata2, aes(color = sykehusAndre),
+        ##                                 shape = 18, size = 6, stat = "identity" ) +
+        ##             ggplot2::scale_color_manual(name = " ", values = col2) +
+        ##             ggplot2::guides(color = guide_legend(order = 2),
+        ##                             fill = guide_legend(order = 1)) +
+        ##             theme1
+
+        ##     }
+
+
+        ##     regfig
+
+        ##     ## ggplot(data.ll()$data, aes(Variabel, n)) + geom_bar(stat = "identity")
 
     })
 
@@ -348,12 +419,18 @@ function(input, output, session) {
     })
 
 
+    output$textsub <- renderText({
+
+        subTitle <- paste0(fil.data()$figTxt, collapse = "\n")
+        paste0(subTitle)
+    })
+
     output$test <- renderDataTable({
 
         if (input$RapValg %in% 1:2){
-            data <- data.ll()$data
+            data <- data.123()$data
         } else {
-            data <- data.andre()$data
+            data <- data.123()$data2
         }
         data
     })
