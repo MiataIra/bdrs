@@ -1,6 +1,7 @@
 
 library(shiny)
 library(shinythemes)
+library(highcharter)
 
 fluidPage(
     theme = shinytheme("readable"),

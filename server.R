@@ -428,9 +428,9 @@ function(input, output, session) {
     output$test <- renderDataTable({
 
         if (input$RapValg %in% 1:2){
-            data <- data.123()$data
+            data <- data.123()$data.ll
         } else {
-            data <- data.123()$data2
+            data <- data.123()$data.2
         }
         data
     })
