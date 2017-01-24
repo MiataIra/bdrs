@@ -4,4 +4,6 @@
 *.xls
 *.dat
 *.txt
+*.rds
+*.RDS
 /data
